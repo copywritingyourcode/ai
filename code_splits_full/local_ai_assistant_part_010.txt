@@ -1,0 +1,126 @@
+
+
+### File: code_tools/executor.py (Part 2/2) ###
+                        'exit_code': -1
+                    }
+                    
+            except Exception as e:
+                logger.error(f"Error running process: {str(e)}")
+                return {
+                    'success': False,
+                    'output': '',
+                    'error': f"Error running process: {str(e)}",
+                    'execution_time': time.time() - start_time,
+                    'exit_code': 1
+                }
+                
+        finally:
+            # Clean up temporary directories
+            if venv_dir and venv_dir.parent.exists():
+                try:
+                    shutil.rmtree(venv_dir.parent)
+                except Exception as e:
+                    logger.warning(f"Failed to clean up virtual environment: {str(e)}")
+            
+            if input_file and input_file.parent.exists():
+                try:
+                    shutil.rmtree(input_file.parent)
+                except Exception as e:
+                    logger.warning(f"Failed to clean up input file: {str(e)}")
+    
+    def execute_function(
+        self,
+        func_code: str,
+        func_name: str,
+        args: List[Any] = None,
+        kwargs: Dict[str, Any] = None,
+        dependencies: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute a single Python function safely.
+        
+        Args:
+            func_code: Python code defining the function
+            func_name: Name of the function to execute
+            args: Positional arguments to pass to the function
+            kwargs: Keyword arguments to pass to the function
+            dependencies: List of pip dependencies to install
+            
+        Returns:
+            Dictionary with execution results:
+                - success: Whether execution completed successfully
+                - result: Return value of the function (if successful)
+                - error: Error message (if any)
+                - execution_time: Time taken to execute
+        """
+        # Prepare arguments
+        args = args or []
+        kwargs = kwargs or {}
+        
+        # Serialize arguments and keyword arguments to JSON
+        serialized_args = json.dumps(args)
+        serialized_kwargs = json.dumps(kwargs)
+        
+        # Create wrapper code to execute the function and return its result
+        wrapper_code = f"""
+{func_code}
+
+import json
+import sys
+import traceback
+
+def main():
+    try:
+        # Deserialize arguments
+        args = json.loads('''{serialized_args}''')
+        kwargs = json.loads('''{serialized_kwargs}''')
+        
+        # Call the function
+        result = {func_name}(*args, **kwargs)
+        
+        # Return result
+        print("##RESULT_START##")
+        print(json.dumps(result))
+        print("##RESULT_END##")
+        
+        return 0
+    except Exception as e:
+        print(f"Error executing function: {{str(e)}}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
+"""
+        
+        # Execute the wrapper code
+        execution_result = self.execute_code(
+            wrapper_code,
+            dependencies=dependencies
+        )
+        
+        # Extract function result from output if successful
+        result_value = None
+        if execution_result['success']:
+            output = execution_result['output']
+            try:
+                # Extract the result portion
+                start_marker = "##RESULT_START##"
+                end_marker = "##RESULT_END##"
+                
+                start_idx = output.find(start_marker)
+                end_idx = output.find(end_marker)
+                
+                if start_idx != -1 and end_idx != -1:
+                    result_json = output[start_idx + len(start_marker):end_idx].strip()
+                    result_value = json.loads(result_json)
+            except Exception as e:
+                execution_result['success'] = False
+                execution_result['error'] += f"\nError parsing function result: {str(e)}"
+        
+        return {
+            'success': execution_result['success'],
+            'result': result_value,
+            'error': execution_result['error'],
+            'execution_time': execution_result['execution_time']
+        } 

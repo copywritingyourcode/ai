@@ -1,0 +1,23 @@
+# Core dependencies
+ollama>=0.1.26
+chromadb>=0.4.18
+pyyaml>=6.0
+rich>=13.6.0
+
+# Document processing
+pymupdf>=1.23.7
+striprtf>=0.0.24
+tiktoken>=0.5.1; platform_system != "Darwin" or platform_machine != "arm64"
+
+# Utilities
+numpy>=1.24.0
+requests>=2.31.0
+tqdm>=4.66.1
+
+# Code analysis tools
+pylint>=3.0.2
+flake8>=6.1.0
+mypy>=1.5.1
+bandit>=1.7.5
+pytest>=7.4.3
+black>=23.11.0 

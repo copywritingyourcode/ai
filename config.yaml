@@ -1,0 +1,123 @@
+# Local AI Assistant Configuration
+
+# Logging configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/local_ai_assistant.log"
+
+# Model configuration
+model:
+  # Default model for general use
+  default: "gemma3:27b"
+  
+  # Embedding model for vector storage
+  embedding: "nomic-embed-text"
+  
+  # RAG-specific model
+  rag: "deepseek-rag"
+  
+  # Ollama configuration
+  ollama:
+    host: "http://localhost"
+    port: 11434
+  
+  # Default generation parameters
+  parameters:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 40
+    num_predict: 1024  # Max tokens to generate
+
+# Memory configuration
+memory:
+  vector_store:
+    persist_directory: "data/memory"
+    collection_name: "conversations"
+    distance_metric: "cosine"
+  
+  # Conversation context
+  context:
+    max_messages: 10  # Max messages to include in immediate context
+    relevance_messages: 5  # Number of relevant messages to retrieve
+    recent_messages: 3  # Number of recent messages to always include
+
+# Document handling configuration
+document:
+  storage_dir: "data/documents"
+  supported_formats:
+    - "pdf"
+    - "txt"
+    - "rtf"
+  max_file_size_mb: 50
+  
+  # Document chunking settings
+  chunk_size: 500  # Target chunk size in tokens
+  chunk_overlap: 50  # Overlap between chunks in tokens
+  separator: "\n\n"  # Preferred chunk separator
+
+# Debug configuration
+debug:
+  enabled: true
+  issue_categories:
+    - "syntax_error"
+    - "code_quality"
+    - "security"
+    - "factual_accuracy"
+    - "formatting_issue"
+  
+  # Response analysis
+  response_analysis:
+    max_issues: 5  # Maximum number of issues to report
+    severity_threshold: "warning"  # Minimum severity to report (info, warning, error)
+
+# Code tools configuration
+code_tools:
+  # Code concentration settings
+  concentrator:
+    ignore_patterns:
+      - "*.pyc"
+      - "__pycache__/*"
+      - ".git/*"
+      - "venv/*"
+      - "*.log"
+    max_file_size_mb: 10
+    include_file_headers: true
+  
+  # Code execution settings
+  execution:
+    timeout_seconds: 30
+    max_memory_mb: 200
+    allowed_imports:
+      - "os.path"
+      - "sys"
+      - "re"
+      - "json"
+      - "math"
+      - "datetime"
+      - "collections"
+      - "itertools"
+    restrict_builtins:
+      - "eval"
+      - "exec"
+      - "__import__"
+  
+  # Code formatting settings
+  formatting:
+    python_line_length: 88
+    enable_formatters:
+      - "black"
+      - "isort"
+      - "prettier"
+  
+  # Code analysis settings
+  analysis:
+    enable_analyzers:
+      - "pylint"
+      - "flake8"
+      - "bandit"
+      - "eslint"   # Code splitter settings
+  splitter:
+    token_limit: 8000
+    output_dir: "code_splits"
+    preserve_file_boundaries: true

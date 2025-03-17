@@ -1,0 +1,25 @@
+/help
+/thinking on
+Hello, how are you today?
+What can you do?
+Tell me a short joke.
+/load test_document.txt
+What is the unique identifier in the test document?
+What is the test document about?
+/thinking off
+/status
+/debug on
+What's the capital of France?
+How do I make pancakes?
+Who invented the internet?
+What is machine learning?
+/models
+/docs
+/debug off
+What's the meaning of life?
+What day is it today?
+/memory
+How does the Local AI Assistant work?
+What's your favorite book?
+Goodbye!
+/quit

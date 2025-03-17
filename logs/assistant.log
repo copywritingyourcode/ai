@@ -1,0 +1,25 @@
+2025-03-17 14:53:51,853 - root - INFO - Logging initialized
+2025-03-17 14:53:51,854 - local_ai_assistant.main - INFO - Starting Local AI Assistant
+2025-03-17 14:53:51,854 - local_ai_assistant.main - INFO - Initializing model manager
+2025-03-17 14:53:51,891 - httpx - INFO - HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-03-17 14:53:51,891 - local_ai_assistant.models.model_manager - INFO - Ollama service is available
+2025-03-17 14:53:51,892 - local_ai_assistant.models.model_manager - INFO - Loading model: gemma3:27b
+2025-03-17 14:53:51,894 - httpx - INFO - HTTP Request: POST http://localhost:11434/api/pull "HTTP/1.1 200 OK"
+2025-03-17 14:53:53,062 - local_ai_assistant.models.model_manager - INFO - Model gemma3:27b loaded successfully
+2025-03-17 14:53:53,062 - local_ai_assistant.models.model_manager - INFO - Model manager initialized with default model: gemma3:27b
+2025-03-17 14:53:53,062 - local_ai_assistant.main - INFO - Initializing vector store
+2025-03-17 14:53:53,102 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2025-03-17 14:53:53,177 - local_ai_assistant.memory.vector_store - INFO - Creating new collection 'conversation_memory'
+2025-03-17 14:53:53,183 - local_ai_assistant.memory.vector_store - INFO - Initialized vector store with 0 items
+2025-03-17 14:53:53,183 - local_ai_assistant.main - INFO - Initializing document loader
+2025-03-17 14:53:53,186 - local_ai_assistant.document.loader - INFO - Document loader initialized, storage dir: data/documents
+2025-03-17 14:53:53,186 - local_ai_assistant.main - INFO - Starting CLI interface
+2025-03-17 14:53:53,188 - local_ai_assistant.debug.response_analyzer - INFO - Response analyzer initialized, enabled: True
+2025-03-17 14:53:53,188 - local_ai_assistant.cli.interface - INFO - CLI interface initialized
+2025-03-17 14:53:53,188 - local_ai_assistant.main - ERROR - Fatal error: 'ModelManager' object has no attribute 'active_model'
+Traceback (most recent call last):
+  File "/Users/Ai/ai/local_ai_assistant/main.py", line 82, in main
+    cli = CLI(
+  File "/Users/Ai/ai/local_ai_assistant/cli/interface.py", line 69, in __init__
+    self.active_model = self.model_manager.active_model
+AttributeError: 'ModelManager' object has no attribute 'active_model'

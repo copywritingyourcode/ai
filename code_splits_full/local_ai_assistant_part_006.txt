@@ -1,0 +1,466 @@
+
+
+### File: code_tools/analyzer.py (Part 2/2) ###
+                                'severity': 'warning'
+                            })
+                            
+                            results['suggestions'].append({
+                                'line': node.lineno,
+                                'message': f"Refactor function '{func_name}' to reduce complexity",
+                                'fix': "Consider breaking this function into smaller, more focused functions"
+                            })
+            
+            results['metrics'] = metrics
+            
+            return results
+            
+        except SyntaxError as e:
+            # Handle syntax errors
+            results['success'] = False
+            results['error'] = f"Syntax error: {str(e)}"
+            
+            # Extract line number and message
+            if hasattr(e, 'lineno') and hasattr(e, 'msg'):
+                results['issues'].append({
+                    'line': e.lineno,
+                    'message': f"Syntax error: {e.msg}",
+                    'severity': 'error'
+                })
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error in basic Python analysis: {str(e)}")
+            results['success'] = False
+            results['error'] = f"Error in basic Python analysis: {str(e)}"
+            return results
+    
+    def _analyze_javascript(
+        self,
+        code: str,
+        filename: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Analyze JavaScript code using ESLint.
+        
+        Args:
+            code: JavaScript code to analyze
+            filename: Optional filename for context
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        # Use ESLint if available
+        if self._check_external_analyzer('eslint'):
+            return self._run_eslint(code, filename, 'javascript')
+        
+        # Basic analysis as fallback
+        return self._basic_analysis(code, 'javascript')
+    
+    def _analyze_typescript(
+        self,
+        code: str,
+        filename: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Analyze TypeScript code using ESLint with TypeScript support.
+        
+        Args:
+            code: TypeScript code to analyze
+            filename: Optional filename for context
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        # Use ESLint if available
+        if self._check_external_analyzer('eslint'):
+            return self._run_eslint(code, filename, 'typescript')
+        
+        # Basic analysis as fallback
+        return self._basic_analysis(code, 'typescript')
+    
+    def _run_eslint(
+        self,
+        code: str,
+        filename: Optional[str] = None,
+        language: str = 'javascript'
+    ) -> Dict[str, Any]:
+        """
+        Run ESLint on JavaScript/TypeScript code.
+        
+        Args:
+            code: Code to analyze
+            filename: Optional filename for context
+            language: Language identifier ('javascript' or 'typescript')
+            
+        Returns:
+            Dictionary with ESLint results
+        """
+        try:
+            # Create a temporary file for analysis
+            suffix = '.ts' if language == 'typescript' else '.js'
+            temp_file = None
+            
+            try:
+                with tempfile.NamedTemporaryFile(suffix=suffix, mode='w+', delete=False) as f:
+                    temp_file = f.name
+                    f.write(code)
+                
+                # Run ESLint with JSON formatter
+                cmd = ['eslint', '--format=json', temp_file]
+                
+                # If TypeScript, ensure TypeScript config
+                if language == 'typescript':
+                    cmd.append('--parser-options={"ecmaVersion":2020,"sourceType":"module"}')
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True
+                )
+                
+                issues = []
+                suggestions = []
+                
+                # Parse ESLint output
+                if result.stdout:
+                    try:
+                        eslint_json = json.loads(result.stdout)
+                        
+                        for file_result in eslint_json:
+                            for msg in file_result.get('messages', []):
+                                issue = {
+                                    'line': msg.get('line', 0),
+                                    'column': msg.get('column', 0),
+                                    'message': msg.get('message', ''),
+                                    'rule_id': msg.get('ruleId', ''),
+                                    'severity': 'error' if msg.get('severity') == 2 else 'warning'
+                                }
+                                issues.append(issue)
+                                
+                                # Add suggestion if fix is available
+                                if 'fix' in msg:
+                                    suggestions.append({
+                                        'line': msg.get('line', 0),
+                                        'message': f"Fix: {msg.get('message', '')}",
+                                        'fix': msg.get('fix', {}).get('text', '')
+                                    })
+                                
+                    except json.JSONDecodeError:
+                        logger.warning("Failed to parse ESLint JSON output")
+                
+                return {
+                    'success': True,
+                    'issues': issues,
+                    'metrics': {},
+                    'suggestions': suggestions
+                }
+                
+            finally:
+                # Clean up temporary file
+                if temp_file and os.path.exists(temp_file):
+                    os.unlink(temp_file)
+                    
+        except Exception as e:
+            logger.error(f"Error running ESLint: {str(e)}")
+            return {
+                'success': False,
+                'issues': [],
+                'metrics': {},
+                'suggestions': [],
+                'error': f"Error running ESLint: {str(e)}"
+            }
+    
+    def _basic_analysis(
+        self,
+        code: str,
+        language: str
+    ) -> Dict[str, Any]:
+        """
+        Perform basic code analysis for any language.
+        
+        Args:
+            code: Code to analyze
+            language: Language identifier
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        results = {
+            'success': True,
+            'issues': [],
+            'metrics': {},
+            'suggestions': [],
+            'error': ''
+        }
+        
+        try:
+            # Calculate basic metrics
+            lines = code.splitlines()
+            results['metrics'] = {
+                'line_count': len(lines),
+                'character_count': len(code),
+                'average_line_length': len(code) / max(1, len(lines))
+            }
+            
+            # Check for very long lines
+            for i, line in enumerate(lines):
+                if len(line) > 100:
+                    results['issues'].append({
+                        'line': i + 1,
+                        'message': f"Line is too long ({len(line)} characters)",
+                        'severity': 'convention'
+                    })
+            
+            # Check for trailing whitespace
+            for i, line in enumerate(lines):
+                if line and line[-1].isspace():
+                    results['issues'].append({
+                        'line': i + 1,
+                        'message': "Line has trailing whitespace",
+                        'severity': 'convention'
+                    })
+                    
+                    results['suggestions'].append({
+                        'line': i + 1,
+                        'message': "Remove trailing whitespace",
+                        'fix': "Remove whitespace at the end of the line"
+                    })
+            
+            # Check for mixing tabs and spaces
+            has_tabs = any('\t' in line for line in lines)
+            has_spaces = any('    ' in line for line in lines)
+            if has_tabs and has_spaces:
+                results['issues'].append({
+                    'line': 1,
+                    'message': "Mixed use of tabs and spaces for indentation",
+                    'severity': 'convention'
+                })
+                
+                results['suggestions'].append({
+                    'line': 1,
+                    'message': "Standardize on either tabs or spaces for indentation",
+                    'fix': "Convert all indentation to spaces (recommended)"
+                })
+            
+            # Check for excessive blank lines
+            blank_line_count = sum(1 for line in lines if not line.strip())
+            if blank_line_count > len(lines) / 3:
+                results['issues'].append({
+                    'line': 1,
+                    'message': f"Excessive blank lines ({blank_line_count} out of {len(lines)})",
+                    'severity': 'convention'
+                })
+                
+                results['suggestions'].append({
+                    'line': 1,
+                    'message': "Reduce the number of blank lines",
+                    'fix': "Remove unnecessary blank lines to improve code readability"
+                })
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error in basic analysis: {str(e)}")
+            results['success'] = False
+            results['error'] = f"Error in basic analysis: {str(e)}"
+            return results
+    
+    def _check_external_analyzer(self, analyzer_name: str) -> bool:
+        """
+        Check if an external analyzer is available and enabled.
+        
+        Args:
+            analyzer_name: Name of the analyzer
+            
+        Returns:
+            True if the analyzer is available, False otherwise
+        """
+        if analyzer_name not in self.external_analyzers:
+            return False
+        
+        analyzer_config = self.external_analyzers[analyzer_name]
+        if not analyzer_config.get('enabled', True):
+            return False
+        
+        # Check if the analyzer is installed
+        try:
+            if analyzer_name == 'eslint':
+                cmd = [analyzer_name, '--version']
+            else:
+                cmd = [analyzer_name, '--version']
+                
+            subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            return True
+        except (subprocess.SubprocessError, FileNotFoundError):
+            logger.warning(f"External analyzer {analyzer_name} not found")
+            return False
+    
+    def analyze_file(
+        self,
+        file_path: Union[str, Path]
+    ) -> Dict[str, Any]:
+        """
+        Analyze a file for code quality issues.
+        
+        Args:
+            file_path: Path to the file to analyze
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        file_path = Path(file_path)
+        
+        # Check if file exists
+        if not file_path.exists():
+            return {
+                'success': False,
+                'error': f"File not found: {file_path}"
+            }
+        
+        try:
+            # Determine language from file extension
+            ext = file_path.suffix.lower().lstrip('.')
+            language_map = {
+                'py': 'python',
+                'js': 'javascript',
+                'ts': 'typescript',
+                'jsx': 'jsx',
+                'tsx': 'tsx',
+                'html': 'html',
+                'css': 'css',
+                'json': 'json',
+                'yaml': 'yaml',
+                'yml': 'yaml',
+                'md': 'markdown'
+            }
+            
+            language = language_map.get(ext, ext)
+            
+            # Read file content
+            with open(file_path, 'r', encoding='utf-8') as f:
+                code = f.read()
+            
+            # Analyze the code
+            return self.analyze_code(code, language, str(file_path))
+            
+        except Exception as e:
+            logger.error(f"Error analyzing file {file_path}: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Error analyzing file: {str(e)}"
+            }
+    
+    def analyze_directory(
+        self,
+        directory_path: Union[str, Path],
+        recursive: bool = True,
+        file_extensions: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Analyze all files in a directory.
+        
+        Args:
+            directory_path: Path to the directory
+            recursive: Whether to recursively analyze subdirectories
+            file_extensions: List of file extensions to analyze
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        directory_path = Path(directory_path)
+        
+        # Check if directory exists
+        if not directory_path.exists() or not directory_path.is_dir():
+            return {
+                'success': False,
+                'error': f"Directory not found: {directory_path}"
+            }
+        
+        # Default file extensions to analyze
+        if file_extensions is None:
+            file_extensions = ['py', 'js', 'ts', 'jsx', 'tsx']
+        
+        # Normalize extensions
+        file_extensions = [ext.lower().lstrip('.') for ext in file_extensions]
+        
+        results = {
+            'success': True,
+            'analyzed_files': [],
+            'issues_by_file': {},
+            'metrics_by_file': {},
+            'overall_metrics': {
+                'total_issues': 0,
+                'error_count': 0,
+                'warning_count': 0,
+                'convention_count': 0,
+                'total_lines': 0,
+                'average_issues_per_line': 0
+            },
+            'error': ''
+        }
+        
+        try:
+            # Find files to analyze
+            files_to_analyze = []
+            
+            if recursive:
+                for root, _, files in os.walk(directory_path):
+                    for file in files:
+                        file_path = Path(root) / file
+                        if file_path.suffix.lower().lstrip('.') in file_extensions:
+                            files_to_analyze.append(file_path)
+            else:
+                for file in os.listdir(directory_path):
+                    file_path = directory_path / file
+                    if file_path.is_file() and file_path.suffix.lower().lstrip('.') in file_extensions:
+                        files_to_analyze.append(file_path)
+            
+            # Analyze each file
+            for file_path in files_to_analyze:
+                file_result = self.analyze_file(file_path)
+                
+                if file_result['success']:
+                    file_key = str(file_path.relative_to(directory_path))
+                    results['analyzed_files'].append(file_key)
+                    
+                    # Store issues and metrics
+                    results['issues_by_file'][file_key] = file_result.get('issues', [])
+                    results['metrics_by_file'][file_key] = file_result.get('metrics', {})
+                    
+                    # Update overall metrics
+                    results['overall_metrics']['total_issues'] += len(file_result.get('issues', []))
+                    results['overall_metrics']['total_lines'] += file_result.get('metrics', {}).get('line_count', 0)
+                    
+                    # Count by severity
+                    for issue in file_result.get('issues', []):
+                        severity = issue.get('severity', 'warning')
+                        if severity == 'error':
+                            results['overall_metrics']['error_count'] += 1
+                        elif severity == 'warning':
+                            results['overall_metrics']['warning_count'] += 1
+                        elif severity == 'convention':
+                            results['overall_metrics']['convention_count'] += 1
+            
+            # Calculate average issues per line
+            if results['overall_metrics']['total_lines'] > 0:
+                results['overall_metrics']['average_issues_per_line'] = (
+                    results['overall_metrics']['total_issues'] / results['overall_metrics']['total_lines']
+                )
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error analyzing directory {directory_path}: {str(e)}")
+            return {
+                'success': False,
+                'analyzed_files': results['analyzed_files'],
+                'issues_by_file': results['issues_by_file'],
+                'metrics_by_file': results['metrics_by_file'],
+                'overall_metrics': results['overall_metrics'],
+                'error': f"Error analyzing directory: {str(e)}"
+            } 

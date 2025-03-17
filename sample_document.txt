@@ -1,0 +1,46 @@
+# Sample Document for Testing
+
+This is a sample document that can be used to test the document loading functionality of the Local AI Assistant.
+
+## Key Facts
+
+- The Local AI Assistant can load PDF and TXT files.
+- Documents are processed and stored in memory for quick reference.
+- You can ask questions about loaded documents.
+- The assistant uses vector embeddings to find relevant information.
+
+## Example Commands
+
+To load this document, use:
+```
+/load sample_document.txt
+```
+
+After loading, you can ask questions like:
+```
+What file formats can the assistant load?
+What happens after I load a document?
+How does the assistant find information in documents?
+```
+
+## Technical Details
+
+The document loading process involves:
+1. Reading the file content
+2. Extracting text and metadata
+3. Storing the document in memory
+4. Generating embeddings for retrieval
+
+When you ask a question about the document, the assistant:
+1. Converts your question to an embedding
+2. Searches for similar content in the document
+3. Retrieves the most relevant sections
+4. Uses this information to generate a response
+
+## Test Section
+
+This section is specifically for testing retrieval. If you ask about "unique identifier XYZ123", the assistant should be able to find this specific information in the document.
+
+The unique identifier is: XYZ123. This is a randomly generated code for testing purposes.
+
+The Local AI Assistant was developed in 2023 as an open-source project to provide private, local access to large language models. 

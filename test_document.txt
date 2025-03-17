@@ -1,0 +1,13 @@
+# Test Document
+
+This is a test document for the Local AI Assistant.
+
+## Important Information
+
+- The test document contains key information about testing.
+- The unique identifier in this document is: TEST123
+- This document was created for testing purposes.
+
+## Technical Details
+
+The Local AI Assistant should be able to find information in this document when asked.

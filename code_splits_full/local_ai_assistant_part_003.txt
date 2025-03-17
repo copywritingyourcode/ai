@@ -1,0 +1,132 @@
+
+
+### File: cli/interface.py (Part 2/2) ###
+                time_str = time.strftime(' [%Y-%m-%d %H:%M:%S]', time.localtime(timestamp))
+            
+            # Truncate long messages
+            if len(text) > 100:
+                text = text[:100] + "..."
+            
+            print(f"{i+1}. {role.capitalize()}{time_str}: {text}")
+    
+    def _show_status(self):
+        """Show system status."""
+        print("\nSystem Status:")
+        print(f"  Mock mode: {'Enabled' if self.mock_mode else 'Disabled'}")
+        print(f"  Debug mode: {'Enabled' if self.debug_enabled else 'Disabled'}")
+        print(f"  Active model: {self.active_model}")
+        
+        # Vector store stats
+        memory_count = len(self.vector_store.memory_items) if hasattr(self.vector_store, 'memory_items') else 'Unknown'
+        print(f"  Memory items: {memory_count}")
+        
+        # Document stats
+        doc_count = len(self.document_loader.documents) if hasattr(self.document_loader, 'documents') else 'Unknown'
+        print(f"  Loaded documents: {doc_count}")
+    
+    def _clear_screen(self):
+        """Clear the terminal screen."""
+        os.system('cls' if os.name == 'nt' else 'clear')
+        self._print_welcome()
+    
+    def _process_query(self, query: str):
+        """
+        Process a user query and generate a response.
+        
+        Args:
+            query: User query string
+        """
+        try:
+            self._print(f"You: {query}", style="user")
+            
+            # Get context from both conversation memory and documents
+            combined_context = self.vector_store.get_combined_context(
+                query_text=query,
+                n_conversation=3,
+                n_documents=3
+            )
+            
+            # Format context for inclusion in prompt
+            context_str = self.vector_store.format_context_for_prompt(combined_context)
+            
+            # Build prompt with context if available
+            if context_str:
+                prompt = f"""
+                The following context may be helpful for answering the user's question:
+                
+                {context_str}
+                
+                User question: {query}
+                
+                If the context doesn't contain the information needed to answer the question, use your own knowledge to provide a helpful and accurate response.
+                """
+            else:
+                prompt = f"""
+                User question: {query}
+                
+                Please provide a helpful and accurate response based on your knowledge.
+                """
+            
+            # Initialize thinking display if enabled
+            thinking_displayed = False
+            if self.show_thinking:
+                self.console.print("[bold blue]Thinking...[/bold blue]")
+                
+                def update_thinking():
+                    nonlocal thinking_displayed
+                    if not thinking_displayed:
+                        self.console.print("- Searching for relevant context...", style="dim")
+                        self.console.print(f"- Found {len(combined_context)} relevant context items", style="dim")
+                        self.console.print("- Generating response with Ollama model...", style="dim")
+                        thinking_displayed = True
+                
+                # Use the console status with a string spinner name instead of a Spinner object
+                with self.console.status("Generating response...", spinner="dots"):
+                    # Add a slight delay to show thinking process
+                    time.sleep(0.5)
+                    update_thinking()
+                    
+                    # Generate response
+                    response = self.model_manager.generate_text(prompt)
+            else:
+                # Generate response without thinking display
+                with self.console.status("Generating response...", spinner="dots"):
+                    response = self.model_manager.generate_text(prompt)
+            
+            # Print assistant response
+            self._print(f"AI: {response}", style="assistant")
+            
+            # Add to memory
+            self.vector_store.add_conversation_pair(query, response)
+            
+            # Analyze response in debug mode
+            if self.debug_enabled:
+                issues = self.response_analyzer.analyze_response(query, response)
+                if issues:
+                    self.console.print("\nDebug Info:", style=self.debug_style)
+                    
+                    # Handle both list/dict issues and string issues
+                    if isinstance(issues, list):
+                        for issue in issues:
+                            if isinstance(issue, dict):
+                                # Issue is a dictionary with category and message/description
+                                if 'message' in issue:
+                                    self.console.print(f"- {issue.get('category', 'issue')}: {issue['message']}", style=self.debug_style)
+                                elif 'description' in issue:
+                                    self.console.print(f"- {issue.get('category', 'issue')}: {issue['description']}", style=self.debug_style)
+                                else:
+                                    self.console.print(f"- {issue.get('category', 'issue')}: {str(issue)}", style=self.debug_style)
+                            else:
+                                # Issue is a string or other type
+                                self.console.print(f"- Issue: {str(issue)}", style=self.debug_style)
+                    elif isinstance(issues, str):
+                        # Issues is a single string
+                        self.console.print(f"- {issues}", style=self.debug_style)
+                    else:
+                        # Any other format
+                        self.console.print(f"- Debug info: {str(issues)}", style=self.debug_style)
+            
+        except Exception as e:
+            self.console.print(f"\nDebug Info:", style=self.debug_style)
+            self.console.print(f"{traceback.format_exc()}", style=self.debug_style)
+            self.console.print(f"Error generating response: {str(e)}", style=self.error_style) 

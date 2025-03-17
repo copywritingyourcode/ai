@@ -1,0 +1,7 @@
+2025-03-17 14:53:53,188 - local_ai_assistant.main - ERROR - Fatal error: 'ModelManager' object has no attribute 'active_model'
+Traceback (most recent call last):
+  File "/Users/Ai/ai/local_ai_assistant/main.py", line 82, in main
+    cli = CLI(
+  File "/Users/Ai/ai/local_ai_assistant/cli/interface.py", line 69, in __init__
+    self.active_model = self.model_manager.active_model
+AttributeError: 'ModelManager' object has no attribute 'active_model'

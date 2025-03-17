@@ -1,0 +1,165 @@
+
+
+### File: memory/vector_store.py (Part 2/2) ###
+                results = self.collection.get(
+                    ids=[id],
+                    include=["documents", "metadatas", "embeddings"]
+                )
+                
+                if results and 'ids' in results and results['ids']:
+                    return {
+                        'id': results['ids'][0],
+                        'text': results['documents'][0],
+                        'metadata': results['metadatas'][0],
+                        'embedding': results.get('embeddings', [[]])[0] if 'embeddings' in results else None
+                    }
+                else:
+                    logger.warning(f"Message with ID {id} not found")
+                    return None
+                    
+            except Exception as e:
+                logger.error(f"Error getting message by ID: {str(e)}")
+                # Fall back to in-memory method
+        
+        # Mock mode or fallback
+        for item in self.memory_items:
+            if item.get('id') == id:
+                return item
+        
+        logger.warning(f"Message with ID {id} not found in memory")
+        return None
+    
+    def delete_message(self, id: str) -> bool:
+        """
+        Delete a message from memory.
+        
+        Args:
+            id: ID of the message to delete
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if self.chromadb_available:
+            try:
+                self.collection.delete(ids=[id])
+                logger.debug(f"Deleted message with ID: {id}")
+                return True
+                
+            except Exception as e:
+                logger.error(f"Error deleting message: {str(e)}")
+                # Fall back to in-memory method
+        
+        # Mock mode or fallback
+        before_len = len(self.memory_items)
+        self.memory_items = [item for item in self.memory_items if item.get('id') != id]
+        
+        # Check if any item was removed
+        if len(self.memory_items) < before_len:
+            self._save_memory_items()
+            logger.debug(f"Deleted message with ID: {id} from memory")
+            return True
+        
+        logger.warning(f"Message with ID {id} not found for deletion")
+        return False
+    
+    def clear_memory(self) -> bool:
+        """
+        Clear all memory.
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        if self.chromadb_available:
+            try:
+                # Get the current collection name
+                name = self.collection_name
+                
+                # Delete the collection
+                self.client.delete_collection(name)
+                logger.warning(f"Deleted collection '{name}'")
+                
+                # Recreate the collection
+                self.collection = self.client.create_collection(
+                    name=name,
+                    embedding_function=None,
+                    metadata={"hnsw:space": self.distance_metric}
+                )
+                
+                logger.info(f"Recreated empty collection '{name}'")
+                return True
+                
+            except Exception as e:
+                logger.error(f"Error clearing memory: {str(e)}")
+                # Fall back to in-memory method
+        
+        # Mock mode or fallback
+        self.memory_items = []
+        self._save_memory_items()
+        logger.warning("Cleared in-memory storage")
+        return True
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about the vector store.
+        
+        Returns:
+            Dictionary of statistics
+        """
+        if self.chromadb_available:
+            try:
+                # Get count of items
+                count = self.collection.count()
+                
+                # Get all IDs to compute additional stats
+                results = self.collection.get(
+                    include=["metadatas"],
+                    limit=10000  # Reasonable limit to avoid memory issues
+                )
+                
+                stats = {
+                    'total_items': count,
+                    'collection_name': self.collection_name
+                }
+                
+                # Add role counts if available
+                if results and 'metadatas' in results:
+                    user_count = sum(1 for meta in results['metadatas'] if meta.get('role') == 'user')
+                    assistant_count = sum(1 for meta in results['metadatas'] if meta.get('role') == 'assistant')
+                    doc_chunks = sum(1 for meta in results['metadatas'] if meta.get('type') == 'document_chunk')
+                    
+                    stats.update({
+                        'user_messages': user_count,
+                        'assistant_messages': assistant_count,
+                        'document_chunks': doc_chunks
+                    })
+                    
+                    # Get first and last timestamp if available
+                    timestamps = [meta.get('timestamp', 0) for meta in results['metadatas']]
+                    if timestamps:
+                        stats.update({
+                            'oldest_message': min(timestamps),
+                            'newest_message': max(timestamps)
+                        })
+                
+                return stats
+                
+            except Exception as e:
+                logger.error(f"Error getting stats: {str(e)}")
+                # Fall back to in-memory method
+        
+        # Mock mode
+        user_count = sum(1 for item in self.memory_items if item.get('metadata', {}).get('role') == 'user')
+        assistant_count = sum(1 for item in self.memory_items if item.get('metadata', {}).get('role') == 'assistant')
+        doc_chunks = sum(1 for item in self.memory_items if item.get('metadata', {}).get('type') == 'document_chunk')
+        
+        timestamps = [item.get('metadata', {}).get('timestamp', 0) for item in self.memory_items]
+        
+        return {
+            'total_items': len(self.memory_items),
+            'collection_name': self.collection_name,
+            'user_messages': user_count,
+            'assistant_messages': assistant_count,
+            'document_chunks': doc_chunks,
+            'oldest_message': min(timestamps) if timestamps else 0,
+            'newest_message': max(timestamps) if timestamps else 0
+        } 

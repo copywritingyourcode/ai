@@ -1,0 +1,254 @@
+╭─────────────────────────────────────────── Local AI Assistant ───────────────────────────────────────────╮
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ │
+│ ┃                                    Welcome to Local AI Assistant                                     ┃ │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+│                                                                                                          │
+│  • Active model: gemma3:27b                                                                              │
+│  • Debug mode: Enabled                                                                                   │
+│  • Thinking display: Disabled                                                                            │
+│                                                                                                          │
+│ Type /help for available commands or /quit to exit.                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+You:                  Available Commands                 
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Command      ┃ Description                       ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ /help        │ Show this help message            │
+│ /use <model> │ Switch to a different model       │
+│ /load <file> │ Load a document                   │
+│ /debug       │ Enable or disable debug mode      │
+│ /thinking    │ Show AI thinking process          │
+│ /models      │ List available models             │
+│ /docs        │ List loaded documents             │
+│ /memory      │ Show recent memory (last n items) │
+│ /status      │ Show system status                │
+│ /clear       │ Clear the screen                  │
+│ /quit        │ Exit the assistant                │
+└──────────────┴───────────────────────────────────┘
+
+You: Thinking display: Enabled
+
+You: You: Hello, how are you today?
+Thinking...
+- Searching for relevant context...
+- Found 6 relevant context items
+- Generating response with Ollama model...
+AI: I am doing well, thank you for asking! How can I help you today? 
+
+(While this is a polite response, I'm ready to answer questions based on the documents I've been provided. I
+can tell you about file formats, the document loading process, or even find information like the unique 
+identifier.)
+
+
+
+
+
+You: You: What can you do?
+Thinking...
+- Searching for relevant context...
+- Found 6 relevant context items
+- Generating response with Ollama model...
+AI: I can load **PDF and TXT** files. After loading a document, I can 
+answer questions about its content. 
+
+Here's how it works: I convert your question into an embedding, search for 
+similar content in the loaded document, retrieve the most relevant 
+sections, and then use that information to generate a response. 
+
+I can also tell you about the document loading process or find specific 
+information within the document, like the unique identifier (which is 
+XYZ123).
+
+
+
+
+
+You: You: Tell me a short joke.
+Thinking...
+- Searching for relevant context...
+- Found 6 relevant context items
+- Generating response with Ollama model...
+AI: I'm designed to work with the content of documents you provide, and 
+answer questions *about those documents*. I can't tell jokes – I don't have
+a knowledge base for that! 
+
+I *can* tell you I can load **PDF and TXT** files and answer questions 
+based on their content. Would you like to load a document and ask me 
+something about *it*?
+
+
+
+
+
+You: Indexing document: test_document.txt...
+Document loaded with ID: 9938a032-98af-4b7e-afe4-4b033755992b
+You can now ask questions about test_document.txt
+
+You: You: What is the unique identifier in the test document?
+Thinking...
+- Searching for relevant context...
+- Found 6 relevant context items
+- Generating response with Ollama model...
+AI: The unique identifier in the test document is: TEST123.
+
+You: You: What is the test document about?
+Thinking...
+- Searching for relevant context...
+- Found 6 relevant context items
+- Generating response with Ollama model...
+AI: The test document is about testing the Local AI Assistant. It contains 
+key information about testing and was created for testing purposes. It's 
+used to verify the assistant's ability to find information within loaded 
+documents.
+
+You: Thinking display: Disabled
+
+You: 
+System Status:
+  Mock mode: Disabled
+  Debug mode: Enabled
+  Active model: gemma3:27b
+  Memory items: 0
+  Loaded documents: 5
+
+You: Debug mode: Enabled
+
+You: You: What's the capital of France?
+AI: The provided documents are about testing the Local AI Assistant and its
+ability to retrieve information. They detail how the assistant works and 
+include a test section with a specific unique identifier ("XYZ123") to 
+verify its retrieval capabilities. 
+
+The documents **do not contain information about the capital of France**. 
+Therefore, I cannot answer your question using the provided context.
+
+
+
+
+
+You: You: How do I make pancakes?
+AI: The provided documents are about testing the Local AI Assistant and its
+document loading/retrieval process. They detail how the assistant works and
+include a test section with a specific unique identifier ("XYZ123") to 
+verify its retrieval capabilities. 
+
+The documents **do not contain information about how to make pancakes**. 
+Therefore, I cannot answer your question using the provided context.
+
+You: You: Who invented the internet?
+AI: The provided documents are about testing the Local AI Assistant and its
+document loading/retrieval process. They detail how the assistant works and
+include a test section with a specific unique identifier ("XYZ123") to 
+verify its retrieval capabilities. 
+
+The documents **do not contain information about who invented the 
+internet**. Therefore, I cannot answer your question using the provided 
+context.
+
+You: You: What is machine learning?
+AI: The provided documents are about testing the Local AI Assistant and its
+document loading/retrieval process. They detail how the assistant works and
+include a test section with a specific unique identifier ("XYZ123") to 
+verify its retrieval capabilities. 
+
+The documents **do not contain information about machine learning**. 
+Therefore, I cannot answer your question using the provided context.
+
+You: 
+Available Models:
+  gemma3:27b (active)
+  deepseek-rag:latest 
+  qwen:latest 
+  deepseek-r1:7b 
+  nomic-embed-text:latest 
+  qwq:latest 
+  llama3.2:latest 
+
+You: 
+Loaded Documents:
+  0fca003f-386f-46ab-8e11-f2c73413c240: How Delta-Neutral Trading Works- Funding Rate Approach.pdf
+  9809e25e-d046-45dd-a457-c59c72b44565: Programmable Bitcoin Is Here- A Turing-complete Bridgeless Bitcoin Execution Lay.pdf
+  d675ac4b-b844-4b5d-aa61-766fa531e5d5: sample_document.txt
+  6cca782c-0864-4a65-82f4-f49a3e27e400: sample_document.txt
+  9938a032-98af-4b7e-afe4-4b033755992b: test_document.txt
+
+You: Debug mode: Disabled
+
+You: You: What's the meaning of life?
+AI: The provided documents are about testing the Local AI Assistant and its
+document loading/retrieval process. They detail how the assistant works and
+include a test section with specific unique identifiers ("XYZ123" and 
+"TEST123") to verify its retrieval capabilities.
+
+The documents **do not contain information about the meaning of life**. 
+Therefore, I cannot answer your question using the provided context.
+
+You: You: What day is it today?
+AI: The provided documents are about testing the Local AI Assistant and its
+document loading/retrieval process. They detail how the assistant works and
+include a test section with specific unique identifiers ("XYZ123" and 
+"TEST123") to verify its retrieval capabilities. 
+
+The documents **do not contain information about the current date**. 
+Therefore, I cannot answer your question using the provided context.
+
+You: 
+Recent Memory (5 items):
+1. Assistant [2025-03-17 16:16:46]: The provided documents are about testing the Local AI Assistant and its document loading/retrieval p...
+2. User [2025-03-17 16:16:56]: What's the meaning of life?
+3. Assistant [2025-03-17 16:16:56]: The provided documents are about testing the Local AI Assistant and its document loading/retrieval p...
+4. User [2025-03-17 16:17:06]: What day is it today?
+5. Assistant [2025-03-17 16:17:06]: The provided documents are about testing the Local AI Assistant and its document loading/retrieval p...
+
+You: You: How does the Local AI Assistant work?
+AI: The provided documents detail how the Local AI Assistant works. Here's 
+a breakdown:
+
+1. **Converts your question to an embedding.**
+2. **Searches for similar content in the document.**
+3. **Retrieves the most relevant sections.**
+4. **Uses this information to generate a response.**
+
+The assistant was developed in 2023 as an open-source project to provide 
+private, local access to large language models. It also includes a test 
+section to verify its retrieval capabilities using unique identifiers like 
+"XYZ123".
+
+
+
+
+
+You: You: What's your favorite book?
+AI: The provided documents detail how the Local AI Assistant works, but 
+they **do not contain information about favorite books**. Therefore, I 
+cannot answer your question using the provided context. 
+
+Here's what the documents *do* say about how the assistant works:
+
+1. **Converts your question to an embedding.**
+2. **Searches for similar content in the document.**
+3. **Retrieves the most relevant sections.**
+4. **Uses this information to generate a response.**
+
+The documents also mention a test section using unique identifiers like 
+"XYZ123" to verify its retrieval capabilities.
+
+You: You: Goodbye!
+AI: The provided documents detail how the Local AI Assistant works, but 
+they **do not contain information about how to respond to goodbyes**. 
+Therefore, I cannot answer your question using the provided context. 
+
+Here's what the documents *do* say about how the assistant works:
+
+1. **Converts your question to an embedding.**
+2. **Searches for similar content in the document.**
+3. **Retrieves the most relevant sections.**
+4. **Uses this information to generate a response.**
+
+The documents also mention a test section using unique identifiers like 
+"XYZ123" to verify its retrieval capabilities. 
+
+
+
+You: Exiting...

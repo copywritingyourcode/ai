@@ -1,0 +1,16 @@
+{
+  "source": "local_ai_assistant/code_tools",
+  "output_files": [
+    "code_splits/code_tools_part_001.txt",
+    "code_splits/code_tools_part_002.txt",
+    "code_splits/code_tools_part_003.txt",
+    "code_splits/code_tools_part_004.txt",
+    "code_splits/code_tools_part_005.txt",
+    "code_splits/code_tools_part_006.txt",
+    "code_splits/code_tools_part_007.txt",
+    "code_splits/code_tools_part_008.txt"
+  ],
+  "total_tokens": 20405,
+  "files_count": 8,
+  "timestamp": "1742192029.243574"
+}

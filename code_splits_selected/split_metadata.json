@@ -1,0 +1,12 @@
+{
+  "source": [
+    "local_ai_assistant/code_tools/concentrator.py",
+    "local_ai_assistant/code_tools/code_splitter.py"
+  ],
+  "output_files": [
+    "code_splits_selected/code_tools_part_001.txt"
+  ],
+  "total_tokens": 4805,
+  "files_count": 1,
+  "timestamp": "1742192086.1577299"
+}

@@ -1,0 +1,137 @@
+
+
+### File: debug/response_analyzer.py (Part 2/2) ###
+        # Group issues by category
+        grouped_issues = {}
+        for issue in issues:
+            category = issue.get("category", "unknown")
+            if category not in grouped_issues:
+                grouped_issues[category] = []
+            grouped_issues[category].append(issue)
+        
+        # Generate recommendations
+        recommendations = []
+        
+        # Handle syntax errors
+        if "syntax_error" in grouped_issues:
+            for issue in grouped_issues["syntax_error"]:
+                if issue.get("language") == "python":
+                    recommendations.append(
+                        f"Fix Python syntax error: {issue.get('message', '')}"
+                    )
+                else:
+                    recommendations.append(
+                        f"Fix syntax error in {issue.get('language', 'code')}: {issue.get('message', '')}"
+                    )
+        
+        # Handle code quality issues
+        if "code_quality" in grouped_issues:
+            quality_issues = grouped_issues["code_quality"]
+            if len(quality_issues) <= 3:
+                # For a few issues, be specific
+                for issue in quality_issues:
+                    recommendations.append(
+                        f"Improve code quality: {issue.get('message', '')}"
+                    )
+            else:
+                # For many issues, group the recommendation
+                recommendations.append(
+                    f"Review code for quality issues: found {len(quality_issues)} potential improvements"
+                )
+        
+        # Handle security issues
+        if "security" in grouped_issues:
+            for issue in grouped_issues["security"]:
+                recommendations.append(
+                    f"Fix security issue: {issue.get('message', '')}"
+                )
+        
+        # Handle factual accuracy
+        if "factual_accuracy" in grouped_issues:
+            fact_issues = grouped_issues["factual_accuracy"]
+            if len(fact_issues) == 1:
+                issue = fact_issues[0]
+                recommendations.append(
+                    f"Verify factual claim: \"{issue.get('claim', '')}\" - {issue.get('explanation', '')}"
+                )
+            else:
+                # Summarize multiple factual issues
+                recommendations.append(
+                    f"Review response for factual accuracy: found {len(fact_issues)} questionable claims"
+                )
+        
+        # Handle formatting issues
+        if "formatting_issue" in grouped_issues:
+            format_issues = grouped_issues["formatting_issue"]
+            for issue in format_issues:
+                if "code block" in issue.get("message", ""):
+                    recommendations.append("Ensure all code blocks are properly closed with ```")
+                else:
+                    recommendations.append(
+                        f"Fix formatting: {issue.get('message', '')}"
+                    )
+        
+        # Use LLM to enhance recommendations if we have very few
+        if len(recommendations) <= 2:
+            try:
+                # Use a more compact summary of issues
+                issue_summary = "\n".join([
+                    f"- {issue.get('category', 'issue')}: {issue.get('message', '')}"
+                    for issue in issues
+                ])
+                
+                improvement_prompt = f"""
+I need to improve this AI assistant response. These issues were detected:
+
+{issue_summary}
+
+Please provide 2-3 specific suggestions to fix these issues. Be precise and actionable.
+
+USER QUERY: {user_query}
+
+ASSISTANT RESPONSE: {assistant_response}
+
+IMPROVEMENT SUGGESTIONS:
+"""
+                
+                result = self.model_manager.generate_text(improvement_prompt)
+                
+                # Extract suggestions (assuming line-by-line format)
+                additional_suggestions = [
+                    line.strip() for line in result.split('\n')
+                    if line.strip() and not line.strip().startswith('-')
+                ]
+                
+                # Add non-duplicate suggestions
+                for suggestion in additional_suggestions:
+                    if not any(self._is_similar_recommendation(suggestion, rec) for rec in recommendations):
+                        recommendations.append(suggestion)
+                
+            except Exception as e:
+                logger.error(f"Error generating additional recommendations: {str(e)}")
+        
+        return recommendations
+    
+    def _is_similar_recommendation(self, rec1: str, rec2: str) -> bool:
+        """
+        Check if two recommendations are similar.
+        
+        Args:
+            rec1: First recommendation
+            rec2: Second recommendation
+            
+        Returns:
+            True if recommendations are similar, False otherwise
+        """
+        # Simple check for significant word overlap
+        words1 = set(re.findall(r'\b\w+\b', rec1.lower()))
+        words2 = set(re.findall(r'\b\w+\b', rec2.lower()))
+        
+        if not words1 or not words2:
+            return False
+        
+        # If one is a subset of the other, or there's significant overlap
+        overlap = len(words1.intersection(words2))
+        smaller_set_size = min(len(words1), len(words2))
+        
+        return overlap / smaller_set_size > 0.7 
